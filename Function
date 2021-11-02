@@ -1,0 +1,48 @@
+def hotel_rev_cleaner():
+    #import packages as needed
+    import pandas as pd
+    import numpy as np
+    import os
+    #setting working directory
+    directory = str(input('Copy and past the working directory path exactly as it appears in your file explorer: '))
+    print('Make sure the Counties.csv, headers.csv, and the hotel revenue csv is in this directory.')
+    os.chdir(directory)
+    headers = pd.read_csv('headers.csv') #raw data has no headers and column names will need to be assigned
+    headers = list(headers)
+    tax_year = str(input('Waht is the Revenue year: (4 digit year)'))
+    file = str(input('Please enter the name of the hotel revenue .csv file.\n Please make sure you type the name exactly as it appears in the file explorer and include the .csv as the file name suffix: '))
+    df = pd.read_csv(file,names=headers)
+    counties = pd.read_csv('Counties.csv')
+
+    dfa = df.iloc[:,9:12]
+    dfb = df.iloc[:,13:15]
+    dfc = df.iloc[:,16]
+    dfd = df.iloc[:,21:]
+    df1 = pd.concat([dfa,dfb,dfc,dfd],axis=1)
+    df1 = pd.merge(df1,counties,on='Location County',)
+
+#Create identifier and reorder columns
+    df1['U_ID'] = df1['Location Address'].str.strip()+df1['Location City'].str.strip()+df1['Location Zip'].map(str).str.strip()
+    cols = ['U_ID']+list(df1.columns)
+    cols = cols[0:5]+['County Name']+cols[6:9]
+    df1 = df1.reindex(columns=cols)
+
+                   
+    #Group and sum the 50's and 60's so that we get the unique revenue for each property
+                   #df2 is table of each property's revenue
+    a = pd.DataFrame(df1['U_ID'])
+    b = df1.iloc[:,7:]
+    df2 = pd.concat([a,b],axis=1)
+    df2 = df2.groupby('U_ID').sum()               
+    
+    #Merging the two dataframes and creating final output file
+    df3 =df1.iloc[:,:7]
+    df3 = df3.groupby('U_ID').max()
+    df4 = pd.merge(df3,df2,on='U_ID',how='right')
+    final = df4
+    
+    file_name = tax_year + '_Hotel_Revenue.csv'
+    return final.to_csv(file_name)
+                   
+                   
+            
