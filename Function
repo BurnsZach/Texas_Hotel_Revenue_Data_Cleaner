@@ -21,12 +21,11 @@ def hotel_rev_cleaner():
     df1 = pd.concat([dfa,dfb,dfc,dfd],axis=1)
     df1 = pd.merge(df1,counties,on='Location County',)
 
-#Create identifier and reorder columns
+    #Create identifier and reorder columns
     df1['U_ID'] = df1['Location Address'].str.strip()+df1['Location City'].str.strip()+df1['Location Zip'].map(str).str.strip()
     cols = ['U_ID']+list(df1.columns)
     cols = cols[0:5]+['County Name']+cols[6:9]
     df1 = df1.reindex(columns=cols)
-
                    
     #Group and sum the 50's and 60's so that we get the unique revenue for each property
                    #df2 is table of each property's revenue
@@ -39,10 +38,8 @@ def hotel_rev_cleaner():
     df3 =df1.iloc[:,:7]
     df3 = df3.groupby('U_ID').max()
     df4 = pd.merge(df3,df2,on='U_ID',how='right')
-    final = df4
+    final = df4[(df4['Unit Capacity']>30) & (df4['Total Room Receipts']>100000) ] # filter number of rooms to be greater than 30 & revenue above 100k
+    final = final.iloc[:,0:7] # Removing Taxable Revenue from view as it is not a part of GRM analysis
     
     file_name = tax_year + '_Hotel_Revenue.csv'
     return final.to_csv(file_name)
-                   
-                   
-            
