@@ -13,7 +13,8 @@ def hotel_rev_cleaner():
     file = str(input('Please enter the name of the hotel revenue .csv file.\n Please make sure you type the name exactly as it appears in the file explorer and include the .csv as the file name suffix: '))
     df = pd.read_csv(file,names=headers)
     counties = pd.read_csv('Counties.csv')
-
+    retc_counties = pd.read_csv('Counties_RETC_Has_Hotels.csv') # file with a column of counties RETC represents hotels in the past 5 years
+    
     dfa = df.iloc[:,9:12]
     dfb = df.iloc[:,13:15]
     dfc = df.iloc[:,16]
@@ -35,10 +36,11 @@ def hotel_rev_cleaner():
     df2 = df2.groupby('U_ID').sum()               
     
     #Merging the two dataframes and creating final output file
+    retc = list(retc_counties['County Name'])
     df3 =df1.iloc[:,:7]
     df3 = df3.groupby('U_ID').max()
     df4 = pd.merge(df3,df2,on='U_ID',how='right')
-    final = df4[(df4['Unit Capacity']>30) & (df4['Total Room Receipts']>100000) ] # filter number of rooms to be greater than 30 & revenue above 100k
+    final = df4[(df4['Unit Capacity']>30) & (df4['Total Room Receipts']>100000)& df4["County Name"].isin(retc)] # filter number of rooms > 30, revenue >100K, and only to include counties for which we repped hotels in the past 5 years
     final = final.iloc[:,0:7] # Removing Taxable Revenue from view as it is not a part of GRM analysis
     
     file_name = tax_year + '_Hotel_Revenue.csv'
